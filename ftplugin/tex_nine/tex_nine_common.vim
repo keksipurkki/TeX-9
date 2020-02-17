@@ -1,7 +1,7 @@
 " LaTeX filetype plugin: Common settings
 " Language:     LaTeX (ft=tex), BibTeX (ft=bib)
 " Maintainer:   Elias Toivanen
-" Version:	1.3.13
+" Version:	1.4.0
 " Last Change:
 " Licence:      GPL
 

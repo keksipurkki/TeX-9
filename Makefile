@@ -1,5 +1,5 @@
 
-VERSION=`git describe`
+VERSION=`git describe --tags`
 PROGRAM=tex_nine
 NAME=$(PROGRAM)-$(VERSION)
 
