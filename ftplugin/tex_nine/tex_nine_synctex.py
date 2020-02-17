@@ -1,6 +1,6 @@
 
-import evince_dbus
-from urllib import pathname2url, url2pathname
+from . import evince_dbus
+from urllib.request import pathname2url, url2pathname
 import dbus.mainloop.glib
 import vim
 import time

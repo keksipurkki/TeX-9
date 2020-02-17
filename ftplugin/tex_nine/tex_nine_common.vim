@@ -2,7 +2,7 @@
 " Language:     LaTeX (ft=tex), BibTeX (ft=bib)
 " Maintainer:   Elias Toivanen
 " Version:	1.3.13
-" Last Change:	
+" Last Change:
 " Licence:      GPL
 
 "************************************************************************
@@ -19,7 +19,7 @@
 "
 "    You should have received a copy of the GNU General Public License
 "    along with this program. If not, see <http://www.gnu.org/licenses/>.
-"                    
+"
 "    Copyright Elias Toivanen, 2011-2014
 "************************************************************************
 
@@ -30,12 +30,12 @@ let b:bib_nine_snippets = fnameescape(s:path.'/snippets/bib_snippets.snippets')
 let &dictionary = fnameescape(s:path.'/tex_dictionary.txt')
 
 " Defaults
-let b:tex_nine_config = { 
-            \    'compiler' : '', 
-            \    'verbose' : 0, 
-            \    'leader' : '', 
-            \    'viewer' : {'app': 'xdg-open', 'target': 'pdf'}, 
-            \    'disable' : 0, 
+let b:tex_nine_config = {
+            \    'compiler' : '',
+            \    'verbose' : 0,
+            \    'leader' : '',
+            \    'viewer' : {'app': 'xdg-open', 'target': 'pdf'},
+            \    'disable' : 0,
             \    'debug': 0,
             \    'synctex' : 0,
             \    'extra_args' : '',
@@ -60,8 +60,8 @@ if b:tex_nine_config.leader == ''
 endif
 
 " Define Python environment once per Vim session
-if !exists('g:tex_nine_did_python') 
+if !exists('g:tex_nine_did_python')
     let g:tex_nine_did_python = 1
     let b:tex_nine_config._pypath = s:path
-    exe "pyfile" fnameescape(b:tex_nine_config._pypath.'/__init__.py')
+    exe "py3file" fnameescape(b:tex_nine_config._pypath.'/__init__.py')
 endif

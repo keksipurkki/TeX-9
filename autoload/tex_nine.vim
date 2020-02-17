@@ -1,36 +1,36 @@
-" vim: tw=72 
+" vim: tw=72
 
 "***********************************************************************
 " General purpose routines
 "***********************************************************************
 
 function tex_nine#GetMaster()
-python << EOF
+python3 << EOF
 try:
     master_file = document.get_master_file(vim.current.buffer)
-except TeXNineError, e:
+except TeXNineError as e:
     echoerr(e)
     master_file = ""
 EOF
-    return pyeval('master_file')
+    return py3eval('master_file')
 endfunction
 
 function tex_nine#GetOutputFile()
-python << EOF
+python3 << EOF
 master_output = ""
 try:
     master_output = document.get_master_output(vim.current.buffer)
-except TeXNineError, e:
+except TeXNineError as e:
     echoerr(e)
     master_output = ""
 EOF
-    return pyeval('master_output')
+    return py3eval('master_output')
 endfunction
 
 function tex_nine#GetCompiler(config)
 
     " The mode line takes precedence
-    silent! let tex_nine_compiler = pyeval('document.get_compiler(vim.current.buffer)')
+    silent! let tex_nine_compiler = py3eval('document.get_compiler(vim.current.buffer)')
 
     " The compiler was set in vimrc
     if tex_nine_compiler == "" && a:config.compiler != ""
@@ -53,14 +53,14 @@ endfunction
 
 function tex_nine#ViewDocument()
     echo "Viewing the document...\r"
-    python document.view(vim.current.buffer)
+    python3 document.view(vim.current.buffer)
 endfunction
 
 function tex_nine#ForwardSearch()
-python << EOF
+python3 << EOF
 try:
     document.forward_search(vim.current.buffer, vim.current)
-except TeXNineError, e:
+except TeXNineError as e:
     echoerr(e)
 EOF
 return
@@ -72,11 +72,11 @@ endfunction
 "***********************************************************************
 
 function tex_nine#UpdateHeader()
-    python document.update_header(vim.current.buffer)
+    python3 document.update_header(vim.current.buffer)
 endfunction
 
 function tex_nine#InsertSkeleton(skeleton)
-   python document.insert_skeleton(vim.current.buffer, vim.eval('a:skeleton'))
+   python3 document.insert_skeleton(vim.current.buffer, vim.eval('a:skeleton'))
    update
    edit
    " Enter insert mode for safety and set the buffer as modified
@@ -86,10 +86,10 @@ endfunction
 
 function tex_nine#OmniCompletion(findstart, base)
     if a:findstart
-        let pos = pyeval('omni.findstart()')
+        let pos = py3eval('omni.findstart()')
         return pos
     else
-        let compl = pyeval('omni.completions()')
+        let compl = py3eval('omni.completions()')
         return compl
     endif
 endfunction
@@ -104,7 +104,7 @@ function tex_nine#MathCompletion(findstart, base)
         endwhile
         return start
     else
-        let compl = pyeval('tex_nine_maths_cache')
+        let compl = py3eval('tex_nine_maths_cache')
         call filter(compl, 'v:val.word =~ "^'.a:base.'"')
         "let res = []
         "for m in compl
@@ -117,10 +117,10 @@ function tex_nine#MathCompletion(findstart, base)
 endfunction
 
 function tex_nine#Bibquery(cword)
-python << EOF
+python3 << EOF
 try:
     document.bibquery(vim.eval('a:cword'), omni.bibpaths)
-except TeXNineError, e:
+except TeXNineError as e:
     echoerr(e)
 EOF
 return
@@ -133,7 +133,7 @@ endfunction
 
 function tex_nine#ChangeFontStyle(style)
     let str = 'di'
-    let is_math = pyeval("int(is_latex_math_environment(vim.current.window))")
+    let is_math = py3eval("int(is_latex_math_environment(vim.current.window))")
     let str .= is_math ? '\math'.a:style : '\text'.a:style
     let str .= "{}\<Left>\<C-R>\""
     return str
@@ -186,16 +186,16 @@ function tex_nine#InsertSnippet(...)
             let s:envkey = input('Environment: ', '', 'custom,ListEnvCompletions')
         endif
 
-        if s:envkey != "" 
-            python snip = document.insert_snippet(vim.eval('s:envkey'), vim.eval('&ft'))
-            return pyeval('snip')
+        if s:envkey != ""
+            python3 snip = document.insert_snippet(vim.eval('s:envkey'), vim.eval('&ft'))
+            return py3eval('snip')
         else
             return "\<Esc>"
         endif
 endfunction
 
 function tex_nine#EnvironmentOperator(mode)
-    let pos = pyeval('get_latex_environment(vim.current.window)["range"]')
+    let pos = py3eval('get_latex_environment(vim.current.window)["range"]')
     if !pos[0] && !pos[1]
         return "\<Esc>"
     endif
@@ -203,7 +203,7 @@ function tex_nine#EnvironmentOperator(mode)
         let pos[0] += 1
         let pos[1] -= 1
     endif
-    return "\<Esc>:".pos[0]."\<Enter>V".(pos[1] - pos[0])."jO" 
+    return "\<Esc>:".pos[0]."\<Enter>V".(pos[1] - pos[0])."jO"
 endfunction
 
 
@@ -212,7 +212,7 @@ endfunction
 "***********************************************************************
 
 function tex_nine#AddBuffer(config, snipfile)
-python << EOF
+python3 << EOF
 omni = TeXNineOmni()
 document = TeXNineDocument(vim.current.buffer)
 document.setup_snippets(vim.eval('a:snipfile'),
@@ -220,10 +220,10 @@ document.setup_snippets(vim.eval('a:snipfile'),
 
 EOF
 if a:config.synctex == 1
-python << EOF
+python3 << EOF
 try:
     target = document.get_master_output(vim.current.buffer)
-    evince_proxy = tex_nine_synctex.TeXNineSyncTeX(target, logging) 
+    evince_proxy = tex_nine_synctex.TeXNineSyncTeX(target, logging)
     document.buffers[vim.current.buffer.name]['synctex'] = evince_proxy
 except (TeXNineError, NameError) as e:
     msg = 'TeX-9: Failed to connect to an Evince window: {0}'.format(str(e).decode('string_escape'))
@@ -240,7 +240,7 @@ function tex_nine#SetAutoCmds(config)
     augroup END
 
     "au QuickFixCmdPre <buffer> call tex_nine#Premake()
-    "au! tex_nine QuickFixCmdPost 
+    "au! tex_nine QuickFixCmdPost
 
     "if a:config.verbose
     "    au tex_nine QuickFixCmdPost <buffer> call tex_nine#PostmakeVanilla()
@@ -250,39 +250,38 @@ function tex_nine#SetAutoCmds(config)
 endfunction
 
 function tex_nine#Reconfigure(config)
-python << EOF
+python3 << EOF
 try:
     omni.update()
     paths = map(path.basename, omni.bibpaths)
     echomsg("Updated BibTeX databases...using {0}.".format(", ".join(paths)))
-except TeXNineError, e:
+except TeXNineError as e:
     # It may be not an error. The user may not use BibTeX...
     echomsg("Cannot update BibTeX databases: "+str(e))
 EOF
-    
-    silent! let tex_nine_compiler = pyeval('document.get_compiler(vim.current.buffer, update=True)')
+
+    silent! let tex_nine_compiler = py3eval('document.get_compiler(vim.current.buffer, update=True)')
 
     " Did it succeed?
     if tex_nine_compiler == "" && a:config.compiler == ""
-        python echomsg("Cannot determine the compiler: Make sure the header contains the compiler line or compiler is set in vimrc.")
+        python3 echomsg("Cannot determine the compiler: Make sure the header contains the compiler line or compiler is set in vimrc.")
         return
     endif
 
-    " Modeline takes precedence 
-    let tex_nine_compiler = tex_nine_compiler ? a:config.compiler : tex_nine_compiler 
+    " Modeline takes precedence
+    let tex_nine_compiler = tex_nine_compiler ? a:config.compiler : tex_nine_compiler
 
     if tex_nine_compiler != ""
         call tex_nine#ConfigureCompiler(tex_nine_compiler, a:config.synctex, a:config.shell_escape, a:config.extra_args)
-        python echomsg("Updated the compiler...using `{}'.".format(vim.eval('tex_nine_compiler')))
+        python3 echomsg("Updated the compiler...using `{}'.".format(vim.eval('tex_nine_compiler')))
     else
-        python echomsg("Cannot determine the compiler: Make sure the header contains the compiler line or compiler is set in vimrc.")
+        python3 echomsg("Cannot determine the compiler: Make sure the header contains the compiler line or compiler is set in vimrc.")
     endif
 endfunction
 
 "***********************************************************************
 " Compilation
 "***********************************************************************
-
 
 function tex_nine#Compile(deep, config)
 
@@ -297,8 +296,8 @@ function tex_nine#Compile(deep, config)
         update " Autowrite is not enough
         exe "lcd" fnameescape(fnamemodify(master, ':h'))
         unsilent echo "Compiling...\r"
-        if a:deep == 1 
-            python document.compile(vim.current.buffer, vim.eval('tex_nine_compiler'))
+        if a:deep == 1
+            python3 document.compile(vim.current.buffer, vim.eval('tex_nine_compiler'))
         endif
         " Make and do not jump to the first error
         exe 'silent' 'make!' escape(fnamemodify(master, ':t'), ' ')
@@ -307,7 +306,7 @@ function tex_nine#Compile(deep, config)
 
     " Post-process errors
     if !a:config.verbose
-        call setqflist(pyeval('document.postmake()'))
+        call setqflist(py3eval('document.postmake()'))
     endif
 
     if (!has("gui_running"))

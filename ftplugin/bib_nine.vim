@@ -2,7 +2,7 @@
 " Languages:    BibTeX
 " Maintainer:   Elias Toivanen
 " Version:      1.3.13
-" Last Change:  
+" Last Change:
 " License:      GPL
 
 "************************************************************************
@@ -21,20 +21,20 @@
 "
 "    You should have received a copy of the GNU General Public License
 "    along with this program. If not, see <http://www.gnu.org/licenses/>.
-"                    
+"
 "    Copyright Elias Toivanen, 2011-2014
 "
 "
 "************************************************************************
 
-if !has('python') 
-    echoerr "TeX-9: a Vim installation with +python is required"
+if !has('python3')
+    echoerr "TeX-9: a Vim installation with +python3 is required"
     finish
 endif
 
 " Let the user have the last word
-if exists('g:tex_nine_config') && has_key(g:tex_nine_config, 'disable') 
-    if g:tex_nine_config.disable 
+if exists('g:tex_nine_config') && has_key(g:tex_nine_config, 'disable')
+    if g:tex_nine_config.disable
         redraw
         echomsg("TeX-9: Disabled by user.")
         finish

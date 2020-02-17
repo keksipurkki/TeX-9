@@ -15,7 +15,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
-#                    
+#
 #    Copyright Elias Toivanen, 2011-2014
 #
 #************************************************************************
@@ -24,7 +24,7 @@
 #
 # Defines two main objects TeXNineDocument and TeXNineOmni that are
 # meant to handle editing and completion tasks. Both of these classes
-# are singletons. 
+# are singletons.
 
 # System modules
 import vim
@@ -42,7 +42,7 @@ from string import Template
 
 #Local modules
 # config = vim.bindeval('b:tex_nine_config')
-# TODO: Remove vim.eval() in favor of vim.bindeval() 
+# TODO: Remove vim.eval() in favor of vim.bindeval()
 # TODO: Separate python module from b:tex_nine_config
 # Older Vim's do not have bindeval
 config = vim.eval('b:tex_nine_config')
@@ -65,10 +65,10 @@ else:
 # TODO: Python 3 support
 if config['synctex']:
     if int(vim.eval("has('gui_running')")):
-        if not int(vim.eval("has('python3')")): 
-            logging.debug("TeX-9: Importing tex_nine_synctex") 
+        if not int(vim.eval("has('python3')")):
+            logging.debug("TeX-9: Importing tex_nine_synctex")
             # NB: Important side effect: Vim will be hooked to the DBus session daemon
-            import tex_nine_synctex
+            from . import tex_nine_synctex
         else:
             echoerr("Must not have +python3 when using SyncTeX.")
     else:
@@ -85,7 +85,7 @@ messages = {
         'NO_BIBTEX': 'No BibTeX databases present...',
         'INVALID_BIBFILE': 'Invalid BibTeX file: `{0}\'',
         'INVALID_BIBENTRY_TYPE': 'No such BibTeX entry type: `{0}\'',
-        'INVALID_BIBENTRY': 'Following BibTeX entry is invalid: {0}', 
+        'INVALID_BIBENTRY': 'Following BibTeX entry is invalid: {0}',
         'INVALID_MODELINE': 'Cannot find master file `{0}\'',
         'NO_MODELINE':  'Cannot find master file: no modeline or \documentclass statement',
         'MASTER_NOT_ACTIVE': 'Please have the master file `{0}\' open in Vim.',
@@ -108,7 +108,7 @@ class TeXNineBase(object):
 
     def add_buffer(self, vimbuffer):
         """Add vimbuffer to buffers.
-        
+
         Does not override existing entries.
         """
         logging.debug("TeX-9: Adding `{0}\' to buffer dict.".format(vimbuffer.name))
@@ -140,7 +140,7 @@ class TeXNineBase(object):
 
         # Most often this is the case
         for line in vimbuffer:
-            if '\\documentclass' in line: 
+            if '\\documentclass' in line:
                 return vimbuffer.name
 
         # Look for modeline
@@ -154,10 +154,10 @@ class TeXNineBase(object):
                 if path.exists(master_file):
                     return master_file
                 else:
-                    e = messages['INVALID_MODELINE'].format(match.group(1)) 
+                    e = messages['INVALID_MODELINE'].format(match.group(1))
                     raise TeXNineError(e)
 
-        # Empty buffer, no match or no read access to master 
+        # Empty buffer, no match or no read access to master
         raise TeXNineError(messages['NO_MODELINE'])
 
     def get_master_file(self, vimbuffer):
@@ -178,7 +178,7 @@ class TeXNineBase(object):
     def multi_file(f):
         """Decorates methods that need to know the actual master file in
         a multi-file project.
-        
+
         The decorator swaps passed vim.buffer object to the vim.buffer object
         of the master file.
 
@@ -191,14 +191,14 @@ class TeXNineBase(object):
             masterbuffer = self.buffers.get(master)
             if masterbuffer is None:
                 # Master is not loaded yet
-                # NB: badd does not make the master buffer active so 
+                # NB: badd does not make the master buffer active so
                 # decorated methods are not guaranteed to get read access to
                 # the master buffer.
                 vim.command('badd {0}'.format(master.replace(' ', '\ ')))
                 for b in vim.buffers:
                     if b.name == master:
                         break
-                self.add_buffer(b) 
+                self.add_buffer(b)
                 self.buffers[master]['master'] = master
                 masterbuffer = self.buffers[master]
 
@@ -227,7 +227,7 @@ class TeXNineBibTeX(TeXNineBase):
 
     # Update entries
     omni.update() #or omni.update(my_new_paths)
-    
+
     """
 
     _bibcompletions = []
@@ -250,7 +250,7 @@ class TeXNineBibTeX(TeXNineBase):
 
     @bibpaths.setter
     def set_bibpaths(self, paths):
-        for p in paths: 
+        for p in paths:
             self._bibpaths.add(p)
         self._bibcompletions = []
         return
@@ -266,7 +266,7 @@ class TeXNineBibTeX(TeXNineBase):
 
         Reads the master file to find out the names of BibTeX files.
         Files in the compilation folder take precedence over files
-        located in a TDS tree[1]. 
+        located in a TDS tree[1].
 
         * Requires the program ``kpsewhich''
         that is shipped with the standard TeXLive distribution.
@@ -276,7 +276,7 @@ class TeXNineBibTeX(TeXNineBase):
 
         if not self._bibpaths or update:
             # Find out the bibfiles in use
-            master = vimbuffer.name 
+            master = vimbuffer.name
             masterbuffer = "\n".join(vimbuffer[:])
             if not masterbuffer:
                 e = messages['MASTER_NOT_ACTIVE'].format(path.basename(master))
@@ -321,7 +321,7 @@ class TeXNineBibTeX(TeXNineBase):
         self._bibcompletions = []
         self._bibpaths.clear()
         if bibpaths:
-            for p in bibpaths: 
+            for p in bibpaths:
                 self._bibpaths.add(p)
         else:
             self.get_bibpaths(vim.current.buffer, update=True)
@@ -332,14 +332,14 @@ class TeXNineOmni(TeXNineBibTeX):
     findstart() finds the position where completion should start and
     stores the relevant `keyword'. An appropiate list is then returned
     based on the keyword.
-    
+
     Following items are completed via omni completion
 
     *   BibTeX entries
     *   Labels for cross-references
     *   Font names when using `fontspec' or 'unicode-math'
     *   Picture names when using `graphicx' (EPS, PNG, JPG, PDF)
-    
+
     """
 
     def __init__(self, bibfiles=[]):
@@ -351,8 +351,8 @@ class TeXNineOmni(TeXNineBibTeX):
         """Labels for references.
 
         Searches \label{} statements in the master file and in
-        \include'd and \input'd files. 
-        
+        \include'd and \input'd files.
+
         * Thanks to TeX's clunky design, included files cannot contain
         "special" characters such as whitespace.
         """
@@ -370,9 +370,9 @@ class TeXNineOmni(TeXNineBibTeX):
             logging.debug('TeX-9: Found {0} labels'.format(len(labels)))
             return labels
 
-        labels, included = zip(*match)
-        labels = filter(None, labels)
-        included = filter(None, included)
+        labels, included = list(zip(*match))
+        labels = [_f for _f in labels if _f]
+        included = [_f for _f in included if _f]
 
         labels = [dict(word=i, menu=basename) for i in labels]
         for fname in included:
@@ -385,10 +385,10 @@ class TeXNineOmni(TeXNineBibTeX):
             try:
                 with open(path.join(master_folder, fname), 'r') as f:
                     inc_labels = re.findall(r'\\label{(?P<label>[^,}]+)}',
-                                            f.read()) 
-                    inc_labels = [dict(word=i, menu=fname) for i in inc_labels] 
+                                            f.read())
+                    inc_labels = [dict(word=i, menu=fname) for i in inc_labels]
                     labels += inc_labels
-            except IOError, e:
+            except IOError as e:
                 # Do not raise an error because the \include statement might
                 # be commented
                 logging.debug(str(e).decode('string_escape'))
@@ -413,14 +413,14 @@ class TeXNineOmni(TeXNineBibTeX):
 
         Checks the compilation directory and its subdirectories.
         """
-        extensions = [ '.PDF', '.PNG', '.JPG', '.JPEG', '.EPS', 
+        extensions = [ '.PDF', '.PNG', '.JPG', '.JPEG', '.EPS',
                       '.pdf', '.png', '.jpg', '.jpeg', '.eps' ]
 
         p, subdirs, files = next(os.walk(path.dirname(vim.current.buffer.name)))
         pics = [ pic for pic in files if pic[pic.rfind('.'):] in extensions ]
         for d in subdirs:
             files = os.listdir(path.join(p, d))
-            pics += [ path.join(d, pic) for pic in files if pic[pic.rfind('.'):] in extensions ] 
+            pics += [ path.join(d, pic) for pic in files if pic[pic.rfind('.'):] in extensions ]
 
         return pics
 
@@ -434,10 +434,10 @@ class TeXNineOmni(TeXNineBibTeX):
                      line.rfind('\\')))
         try:
             # Starting at a backslash and there is no keyword.
-            if '\\' in line[col - 1:col]: 
+            if '\\' in line[col - 1:col]:
                 self.keyword = ""
             else:
-                # There can be a keyword: grab it! 
+                # There can be a keyword: grab it!
                 self.keyword = pat.findall(line)[-1]
         except IndexError:
             self.keyword = None
@@ -452,7 +452,7 @@ class TeXNineOmni(TeXNineBibTeX):
             else:
                 start += 1
 
-            return start 
+            return start
 
     def completions(self):
         """Selects what type of omni completion should occur."""
@@ -463,7 +463,7 @@ class TeXNineOmni(TeXNineBibTeX):
             # Select completion based on keyword
             if self.keyword is not None:
                 # Natbib has \Cite.* type of of commands
-                if 'cite' in self.keyword or 'Cite' in self.keyword: 
+                if 'cite' in self.keyword or 'Cite' in self.keyword:
                     compl = self.bibentries
                 elif 'ref' in self.keyword:
                     compl = self._labels(vim.current.buffer)
@@ -472,7 +472,7 @@ class TeXNineOmni(TeXNineBibTeX):
                 elif 'includegraphics' in self.keyword:
                     compl = self._pics()
 
-        except TeXNineError, e:
+        except TeXNineError as e:
             echoerr("Omni completion failed: "+str(e))
             compl = []
 
@@ -489,9 +489,9 @@ class TeXNineSnippets(object):
         snippet content."""
 
         # String to list, preserving carriage returns
-        lines = string.splitlines(True) 
+        lines = string.splitlines(True)
 
-        # Format the snippet 
+        # Format the snippet
         lines = [ line.lstrip(' ') for line in lines if
                  '#' not in line ]
 
@@ -507,7 +507,7 @@ class TeXNineSnippets(object):
 
         Extracts snippets out of ``fname'' whose syntax resembles that
         of Michael Sander's snipMate plugin. Both BibTeX and LaTeX
-        buffers get their own dictionary.  
+        buffers get their own dictionary.
         """
 
         if self._snippets[ft]:
@@ -519,13 +519,13 @@ class TeXNineSnippets(object):
 
             # Strip trailing empty lines
             snippets = snipfile.read().rstrip('\n').split('snippet')
-            snippets = map(self._parser, snippets)
-            snippets = filter(None, snippets) # Remove comments
+            snippets = list(map(self._parser, snippets))
+            snippets = [_f for _f in snippets if _f] # Remove comments
             self._snippets[ft] = dict(snippets)
 
     def insert_snippet(self, keyword, ft):
         """Inserts snippets into the current Vim buffer.
-        
+
         Fetches and returns the code snippet corresponding to key
         ``keyword'' from the snippet dictionary that belongs to the
         filetype ``ft''.
@@ -547,7 +547,7 @@ class TeXNineSnippets(object):
             if ft == 'tex':
                snippet = ( "m`i"+
                            "\\begin{"+keyword+"}\n\\end{"+keyword+"}"+
-                           "``" 
+                           "``"
                          )
             elif ft == 'bib':
                 echoerr(messages["INVALID_BIBENTRY_TYPE"].format(keyword))
@@ -557,7 +557,7 @@ class TeXNineSnippets(object):
 
 class TeXNineDocument(TeXNineBase, TeXNineSnippets):
     """A class to manipulate LaTeX documents in Vim.
-    
+
     TeXNineDocument can
 
     * Insert a skeleton file into the current Vim buffer
@@ -570,7 +570,7 @@ class TeXNineDocument(TeXNineBase, TeXNineSnippets):
 
     Methods that are decorated with TeXNineBase.multi_file are designed
     to also work in multi-file LaTeX projects.
-    
+
     """
     def __init__(self, vimbuffer,
                  date_label=config['_datelabel'],
@@ -601,13 +601,13 @@ class TeXNineDocument(TeXNineBase, TeXNineSnippets):
             try:
                 target = document.get_master_output(vimbuffer)
                 evince_proxy = tex_nine_synctex.TeXNineSyncTeX(target,
-                                                               logging) 
+                                                               logging)
                 self.buffers[vimbuffer.name]['synctex'] = evince_proxy
-            except TeXNineError, NameError:
+            except TeXNineError as NameError:
                 return
 
         s = self.buffers[vimbuffer.name]['synctex']
-        syncstr = "TeX-9: master={0}, row={1[0]}, col={1[1]}" 
+        syncstr = "TeX-9: master={0}, row={1[0]}, col={1[1]}"
         logging.debug(syncstr.format(vimbuffer.name,
                                      vimcurrent.window.cursor))
         s.forward_search(vimcurrent.buffer.name, vimcurrent.window.cursor)
@@ -627,7 +627,7 @@ class TeXNineDocument(TeXNineBase, TeXNineSnippets):
         kwargs = {'stdout': subprocess.PIPE, 'cwd': cwd}
 
         subprocess.Popen(tex_cmd, **kwargs).wait()
-        stdout, stderr = subprocess.Popen(bib_cmd, **kwargs).communicate() 
+        stdout, stderr = subprocess.Popen(bib_cmd, **kwargs).communicate()
 
         nobibstyle = re.search("found no \\\\bibstyle command",
                                stdout)
@@ -658,7 +658,7 @@ class TeXNineDocument(TeXNineBase, TeXNineSnippets):
 
             return self.buffers[vimbuffer.name]['compiler']
 
-        except TeXNineError, e:
+        except TeXNineError as e:
             echoerr(e)
             return ""
         except KeyError:
@@ -671,7 +671,7 @@ class TeXNineDocument(TeXNineBase, TeXNineSnippets):
         """
 
         valid_entry = lambda x: int(x['valid']) and not ignored.search(x['text'])
-        qflist = filter(valid_entry, vim.eval('getqflist()'))
+        qflist = list(filter(valid_entry, vim.eval('getqflist()')))
 
         # Add BibTeX errors
         while self.biberrors:
@@ -693,7 +693,7 @@ class TeXNineDocument(TeXNineBase, TeXNineSnippets):
             output = self.get_master_output(vimbuffer)
             cmd = '{0} "{1}" &> /dev/null &'.format(config['viewer']['app'], output)
             subprocess.call(cmd, shell=True)
-        except TeXNineError, e:
+        except TeXNineError as e:
             echoerr("Cannot determine the output file: "+str(e))
 
     def insert_skeleton(self, vimbuffer, skeleton_file):
