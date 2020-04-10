@@ -401,11 +401,12 @@ class TeXNineOmni(TeXNineBibTeX):
 
         WARNING: Requires fontconfig.
         """
-        proc = subprocess.Popen(['fc-list', ':', 'family'],
+        proc = subprocess.Popen(['fc-list', '--format=%{family[0]}\n'],
                                 stdout=subprocess.PIPE)
-        output = proc.communicate()[0].splitlines()
+        stdout, stderr = proc.communicate()
+        fonts = {*stdout.decode('utf-8').splitlines()}
+        output = list(fonts)
         output.sort()
-        output = [ i for i,j in groupby(output, lambda x: re.split('[:,]', x)[0]) ]
         return output
 
     def _pics(self):
